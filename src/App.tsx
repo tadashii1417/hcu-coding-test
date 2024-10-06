@@ -1,11 +1,14 @@
-import './App.css'
+import './App.css';
+import { useEffect, useState } from 'react';
 
 function App() {
-  return (
-    <div>
-      Hello
-    </div>
-  )
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    console.log(count);
+  }, []);
+
+  return <div>Hello</div>;
 }
 
-export default App
+export default App;
