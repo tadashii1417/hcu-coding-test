@@ -14,8 +14,8 @@ npm run dev
 
 ## Additional Features
 
-- [ ] UI/UX: app is simple and user-friendly
-- [ ] Component Library: Effective usage of a component library to streamline the UI.
+- [X] UI/UX: app is simple and user-friendly
+- [X] Component Library: Effective usage of a component library to streamline the UI.
 - [X] Mock API with axios-mock-adapter
 - [ ] Add form validation to prevent empty tasks from being added.
 - [ ] Write unit tests for components using React Testing Library.

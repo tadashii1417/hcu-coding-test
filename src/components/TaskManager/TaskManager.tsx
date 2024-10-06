@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from '../../api/mockApi';
+import { Button, Checkbox, Input, Layout, List, Radio, Space, Spin, Typography } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import './TaskManager.css';
+
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
 interface Task {
   id: number;
@@ -32,8 +37,7 @@ const TaskManager: React.FC = () => {
     }
   };
 
-  const addTask = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const addTask = async () => {
     if (newTaskTitle.trim()) {
       const newTask: Task = {
         id: Date.now(),
@@ -41,17 +45,15 @@ const TaskManager: React.FC = () => {
         completed: false,
       };
 
-      // Add the new task to the list immediately
       setTasks((prevTasks) => [...prevTasks, newTask]);
       setNewTaskTitle('');
 
-      // Simulate POST request to the mock API
       try {
         const response = await axios.post('/tasks', newTask);
         setTasks((prevTasks) =>
           prevTasks.map((task) =>
-            task.id === newTask.id ? { ...response.data } : task
-          )
+            task.id === newTask.id ? { ...response.data } : task,
+          ),
         );
       } catch (error) {
         console.error('Error adding task:', error);
@@ -63,8 +65,8 @@ const TaskManager: React.FC = () => {
   const toggleTask = (id: number) => {
     setTasks(
       tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
+        task.id === id ? { ...task, completed: !task.completed } : task,
+      ),
     );
   };
 
@@ -75,50 +77,51 @@ const TaskManager: React.FC = () => {
   });
 
   return (
-    <div className="task-manager">
-      <h1>Task Management</h1>
+    <Layout className="task-manager-layout">
+      <Header className="task-manager-header">
+        <Title level={ 2 }>Task Management</Title>
+      </Header>
+      <Content className="task-manager-content">
+        <Space direction="vertical" size="large" className="task-manager-space">
+          <div className="task-input-container">
+            <Input
+              className="task-input"
+              value={ newTaskTitle }
+              onChange={ (e) => setNewTaskTitle(e.target.value) }
+              placeholder="Enter a new task"
+              onPressEnter={ addTask }
+            />
+            <Button type="primary" icon={ <PlusOutlined /> } onClick={ addTask }>
+              Add Task
+            </Button>
+          </div>
 
-      <form onSubmit={addTask}>
-        <input
-          type="text"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-          placeholder="Enter a new task"
-        />
-        <button type="submit">Add Task</button>
-      </form>
+          <Radio.Group value={ filter } onChange={ (e) => setFilter(e.target.value) }>
+            <Radio.Button value="all">All</Radio.Button>
+            <Radio.Button value="completed">Completed</Radio.Button>
+            <Radio.Button value="incomplete">Incomplete</Radio.Button>
+          </Radio.Group>
 
-      <div className="filter-buttons">
-        <button onClick={() => setFilter('all')} disabled={filter === 'all'}>
-          All
-        </button>
-        <button onClick={() => setFilter('completed')} disabled={filter === 'completed'}>
-          Completed
-        </button>
-        <button onClick={() => setFilter('incomplete')} disabled={filter === 'incomplete'}>
-          Incomplete
-        </button>
-      </div>
-
-      {isLoading ? (
-        <p>Loading tasks...</p>
-      ) : (
-        <ul className="task-list">
-          {filteredTasks.map((task) => (
-            <li key={task.id}>
-              <label className="task-item">
-                <input
-                  type="checkbox"
-                  checked={task.completed}
-                  onChange={() => toggleTask(task.id)}
-                />
-                <span className={task.completed ? 'completed' : ''}>{task.title}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+          <Spin spinning={ isLoading }>
+            <List
+              dataSource={ filteredTasks }
+              renderItem={ (task) => (
+                <List.Item>
+                  <Checkbox
+                    checked={ task.completed }
+                    onChange={ () => toggleTask(task.id) }
+                  >
+                    <span className={ task.completed ? 'task-completed' : '' }>
+                      { task.title }
+                    </span>
+                  </Checkbox>
+                </List.Item>
+              ) }
+            />
+          </Spin>
+        </Space>
+      </Content>
+    </Layout>
   );
 };
 

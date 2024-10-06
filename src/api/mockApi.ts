@@ -6,7 +6,9 @@ const mock = new MockAdapter(axios, { delayResponse: 1000 });
 const tasks = [
   { id: 1, title: 'Learn React', completed: false },
   { id: 2, title: 'Build a to-do app', completed: true },
-  { id: 3, title: 'Deploy the app', completed: false },
+  { id: 3, title: 'Build the app', completed: false },
+  { id: 4, title: 'Purchase domain', completed: false },
+  { id: 5, title: 'Support SEO', completed: false },
 ];
 
 const randomDelay = () => Math.floor(Math.random() * 1000) + 200;
