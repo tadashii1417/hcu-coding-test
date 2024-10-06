@@ -1,6 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from '../../api/mockApi';
-import { Button, Checkbox, Input, Layout, List, Radio, Space, Spin, Typography } from 'antd';
+import {
+  Layout,
+  Input,
+  Button,
+  List,
+  Checkbox,
+  Radio,
+  Space,
+  Typography,
+  Spin,
+  message,
+} from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import './TaskManager.css';
 
@@ -20,6 +31,7 @@ const TaskManager: React.FC = () => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [inputError, setInputError] = useState('');
 
   useEffect(() => {
     fetchTasks();
@@ -32,41 +44,63 @@ const TaskManager: React.FC = () => {
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      message.error('Failed to fetch tasks');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const validateInput = (value: string): boolean => {
+    if (value.trim() === '') {
+      setInputError('Please enter a task');
+      return false;
+    }
+    setInputError('');
+    return true;
+  };
+
   const addTask = async () => {
-    if (newTaskTitle.trim()) {
-      const newTask: Task = {
-        id: Date.now(),
-        title: newTaskTitle.trim(),
-        completed: false,
-      };
+    if (!validateInput(newTaskTitle)) {
+      return;
+    }
 
-      setTasks((prevTasks) => [...prevTasks, newTask]);
-      setNewTaskTitle('');
+    const newTask: Task = {
+      id: Date.now(),
+      title: newTaskTitle.trim(),
+      completed: false,
+    };
 
-      try {
-        const response = await axios.post('/tasks', newTask);
-        setTasks((prevTasks) =>
-          prevTasks.map((task) =>
-            task.id === newTask.id ? { ...response.data } : task,
-          ),
-        );
-      } catch (error) {
-        console.error('Error adding task:', error);
-        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== newTask.id));
-      }
+    setTasks((prevTasks) => [...prevTasks, newTask]);
+    setNewTaskTitle('');
+
+    try {
+      const response = await axios.post('/tasks', newTask);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === newTask.id ? { ...response.data } : task))
+      );
+    } catch (error) {
+      console.error('Error adding task:', error);
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== newTask.id));
+      message.error('Failed to add task');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTaskTitle(e.target.value);
+    if (inputError) {
+      setInputError('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      addTask();
     }
   };
 
   const toggleTask = (id: number) => {
     setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task,
-      ),
+      tasks.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
     );
   };
 
@@ -77,46 +111,44 @@ const TaskManager: React.FC = () => {
   });
 
   return (
-    <Layout className="task-manager-layout">
-      <Header className="task-manager-header">
-        <Title level={ 2 }>Task Management</Title>
+    <Layout className='task-manager-layout'>
+      <Header className='task-manager-header'>
+        <Title level={2}>Task Management</Title>
       </Header>
-      <Content className="task-manager-content">
-        <Space direction="vertical" size="large" className="task-manager-space">
-          <div className="task-input-container">
-            <Input
-              className="task-input"
-              value={ newTaskTitle }
-              onChange={ (e) => setNewTaskTitle(e.target.value) }
-              placeholder="Enter a new task"
-              onPressEnter={ addTask }
-            />
-            <Button type="primary" icon={ <PlusOutlined /> } onClick={ addTask }>
+      <Content className='task-manager-content'>
+        <Space direction='vertical' size='large' className='task-manager-space'>
+          <div className='task-input-container'>
+            <div className='input-wrapper'>
+              <Input
+                value={newTaskTitle}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                placeholder='Enter a new task'
+                status={inputError ? 'error' : ''}
+              />
+              {inputError && <div className='input-error'>{inputError}</div>}
+            </div>
+            <Button type='primary' icon={<PlusOutlined />} onClick={addTask}>
               Add Task
             </Button>
           </div>
 
-          <Radio.Group value={ filter } onChange={ (e) => setFilter(e.target.value) }>
-            <Radio.Button value="all">All</Radio.Button>
-            <Radio.Button value="completed">Completed</Radio.Button>
-            <Radio.Button value="incomplete">Incomplete</Radio.Button>
+          <Radio.Group value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <Radio.Button value='all'>All</Radio.Button>
+            <Radio.Button value='completed'>Completed</Radio.Button>
+            <Radio.Button value='incomplete'>Incomplete</Radio.Button>
           </Radio.Group>
 
-          <Spin spinning={ isLoading }>
+          <Spin spinning={isLoading}>
             <List
-              dataSource={ filteredTasks }
-              renderItem={ (task) => (
+              dataSource={filteredTasks}
+              renderItem={(task) => (
                 <List.Item>
-                  <Checkbox
-                    checked={ task.completed }
-                    onChange={ () => toggleTask(task.id) }
-                  >
-                    <span className={ task.completed ? 'task-completed' : '' }>
-                      { task.title }
-                    </span>
+                  <Checkbox checked={task.completed} onChange={() => toggleTask(task.id)}>
+                    <span className={task.completed ? 'task-completed' : ''}>{task.title}</span>
                   </Checkbox>
                 </List.Item>
-              ) }
+              )}
             />
           </Spin>
         </Space>
