@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from '../../api/mockApi';
 import './TaskManager.css';
 
 interface Task {
@@ -10,15 +11,28 @@ interface Task {
 type FilterType = 'all' | 'completed' | 'incomplete';
 
 const TaskManager: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: 'Learn React', completed: false },
-    { id: 2, title: 'Build a to-do app', completed: true },
-    { id: 3, title: 'Deploy the app', completed: false },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const addTask = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get('/tasks');
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newTaskTitle.trim()) {
       const newTask: Task = {
@@ -26,8 +40,23 @@ const TaskManager: React.FC = () => {
         title: newTaskTitle.trim(),
         completed: false,
       };
-      setTasks([...tasks, newTask]);
+
+      // Add the new task to the list immediately
+      setTasks((prevTasks) => [...prevTasks, newTask]);
       setNewTaskTitle('');
+
+      // Simulate POST request to the mock API
+      try {
+        const response = await axios.post('/tasks', newTask);
+        setTasks((prevTasks) =>
+          prevTasks.map((task) =>
+            task.id === newTask.id ? { ...response.data } : task
+          )
+        );
+      } catch (error) {
+        console.error('Error adding task:', error);
+        setTasks((prevTasks) => prevTasks.filter((task) => task.id !== newTask.id));
+      }
     }
   };
 
@@ -71,20 +100,24 @@ const TaskManager: React.FC = () => {
         </button>
       </div>
 
-      <ul className="task-list">
-        {filteredTasks.map((task) => (
-          <li key={task.id}>
-            <label className="task-item">
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => toggleTask(task.id)}
-              />
-              <span className={task.completed ? 'completed' : ''}>{task.title}</span>
-            </label>
-          </li>
-        ))}
-      </ul>
+      {isLoading ? (
+        <p>Loading tasks...</p>
+      ) : (
+        <ul className="task-list">
+          {filteredTasks.map((task) => (
+            <li key={task.id}>
+              <label className="task-item">
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTask(task.id)}
+                />
+                <span className={task.completed ? 'completed' : ''}>{task.title}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
