@@ -3,12 +3,12 @@
 }
 
 .task-manager-header {
-    background: #fff;
-    padding: 0 20px;
+    margin: 0 auto;
+    padding-top: 30px;
 }
 
 .task-manager-content {
-    padding: 20px 50px;
+    padding: 20px 15%;
 }
 
 .task-manager-space {
